@@ -1,8 +1,10 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
 import { Ship, MapPin, Users, BarChart3, ArrowRight } from 'lucide-react'
+import { useAuth } from '../contexts/AuthContext'
 
 const Home = () => {
+  const { isAuthenticated } = useAuth()
   const features = [
     {
       icon: Ship,
@@ -40,19 +42,31 @@ const Home = () => {
             Track vessels, manage crew, and optimize your fleet performance.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link
-              to="/register"
-              className="btn-primary text-lg px-8 py-3"
-            >
-              Get Started
-              <ArrowRight className="ml-2 h-5 w-5" />
-            </Link>
-            <Link
-              to="/ships"
-              className="btn-outline text-lg px-8 py-3"
-            >
-              View Ships
-            </Link>
+            {!isAuthenticated ? (
+              <>
+                <Link
+                  to="/register"
+                  className="btn-primary text-lg px-8 py-3"
+                >
+                  Get Started
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Link>
+                <Link
+                  to="/ships"
+                  className="btn-outline text-lg px-8 py-3"
+                >
+                  View Ships
+                </Link>
+              </>
+            ) : (
+              <Link
+                to="/dashboard"
+                className="btn-primary text-lg px-8 py-3"
+              >
+                Go to Dashboard
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Link>
+            )}
           </div>
         </div>
       </section>
@@ -96,12 +110,21 @@ const Home = () => {
           <p className="text-xl text-primary-100 mb-8">
             Join hundreds of shipping companies already using Shipsy to manage their fleets.
           </p>
-          <Link
-            to="/register"
-            className="bg-white text-primary-600 hover:bg-gray-100 px-8 py-3 rounded-lg font-semibold text-lg transition-colors duration-200"
-          >
-            Start Free Trial
-          </Link>
+          {!isAuthenticated ? (
+            <Link
+              to="/register"
+              className="bg-white text-primary-600 hover:bg-gray-100 px-8 py-3 rounded-lg font-semibold text-lg transition-colors duration-200"
+            >
+              Start Free Trial
+            </Link>
+          ) : (
+            <Link
+              to="/dashboard"
+              className="bg-white text-primary-600 hover:bg-gray-100 px-8 py-3 rounded-lg font-semibold text-lg transition-colors duration-200"
+            >
+              Go to Dashboard
+            </Link>
+          )}
         </div>
       </section>
     </div>

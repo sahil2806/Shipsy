@@ -13,6 +13,7 @@ const Ships = () => {
   const [sortOrder, setSortOrder] = useState('asc')
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage, setItemsPerPage] = useState(9)
+  const [filtersApplied, setFiltersApplied] = useState(false)
 
   // Build query parameters
   const queryParams = {
@@ -25,22 +26,45 @@ const Ships = () => {
     sortOrder
   }
 
-  // Remove undefined values
-  Object.keys(queryParams).forEach(key => 
-    queryParams[key] === undefined && delete queryParams[key]
-  )
+  // Only apply filters if they have been explicitly applied
+  if (!filtersApplied) {
+    delete queryParams.status
+    delete queryParams.type
+  }
+
+  // Remove undefined values and log for debugging
+  const cleanParams = {}
+  Object.keys(queryParams).forEach(key => {
+    if (queryParams[key] !== undefined && queryParams[key] !== null && queryParams[key] !== '') {
+      cleanParams[key] = queryParams[key]
+    }
+  })
+
+  // Debug logging
+  console.log('🔍 Ships query params:', cleanParams)
+  console.log('🔍 Current filters:', { statusFilter, typeFilter, searchTerm, filtersApplied })
 
   // Fetch ships data
   const { data: shipsData, isLoading, error, refetch } = useQuery({
-    queryKey: ['ships', queryParams],
-    queryFn: () => shipsAPI.getAllShips(queryParams),
+    queryKey: ['ships', cleanParams],
+    queryFn: async () => {
+      console.log('🌐 Making API call with params:', cleanParams)
+      const response = await shipsAPI.getAllShips(cleanParams)
+      console.log('🌐 API call result data:', response.data)
+      return response.data
+    },
     staleTime: 2 * 60 * 1000, // 2 minutes
     keepPreviousData: true
   })
 
   const ships = shipsData?.ships || []
-  const totalShips = shipsData?.totalShips || 0
+  const totalShips = shipsData?.pagination?.totalItems || 0
   const totalPages = Math.ceil(totalShips / itemsPerPage)
+
+  // Debug logging for API response
+  console.log('📡 API Response:', shipsData)
+  console.log('🚢 Ships array:', ships)
+  console.log('📊 Total ships:', totalShips)
 
   // Reset to first page when filters change
   useEffect(() => {
@@ -50,11 +74,25 @@ const Ships = () => {
   // Handle search with debounce
   useEffect(() => {
     const timer = setTimeout(() => {
+      setFiltersApplied(false) // Reset filter status when search changes
       refetch()
     }, 500)
 
     return () => clearTimeout(timer)
   }, [searchTerm, refetch])
+
+  // Force refetch when filters are applied
+  useEffect(() => {
+    if (filtersApplied) {
+      console.log('🔄 Filters applied, refetching data...')
+      refetch()
+    }
+  }, [filtersApplied, refetch])
+
+  // Remove automatic filter application - now filters only apply when button is clicked
+  // useEffect(() => {
+  //   refetch()
+  // }, [statusFilter, typeFilter, sortBy, sortOrder, refetch])
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -74,6 +112,16 @@ const Ships = () => {
   const handlePageChange = (page) => {
     setCurrentPage(page)
     window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  const handleApplyFilters = () => {
+    console.log('🚀 Applying filters:', { statusFilter, typeFilter, searchTerm })
+    setCurrentPage(1)
+    setFiltersApplied(true)
+    // Force a refetch with current filter values
+    setTimeout(() => {
+      refetch()
+    }, 100)
   }
 
   if (error) {
@@ -100,7 +148,23 @@ const Ships = () => {
 
       {/* Search and Filters */}
       <div className="card">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="mb-4 p-2 bg-blue-50 border border-blue-200 rounded-lg">
+          <div className="flex items-center space-x-2 text-blue-800">
+            <Filter className="h-4 w-4" />
+            <span className="text-sm font-medium">Filter Instructions:</span>
+            <span className="text-sm">Set your filters below and click "Apply Filters" to see results. Search works automatically.</span>
+          </div>
+        </div>
+        
+        {isLoading && (
+          <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+            <div className="flex items-center space-x-2 text-blue-800">
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+              <span className="text-sm">Applying filters...</span>
+            </div>
+          </div>
+        )}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
           <div className="lg:col-span-2">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
@@ -115,11 +179,14 @@ const Ships = () => {
           </div>
           
           <div className="flex items-center space-x-2">
-            <Filter className="h-5 w-5 text-gray-400" />
+            <Filter className={`h-5 w-5 ${statusFilter !== 'all' ? 'text-green-600' : 'text-gray-400'}`} />
             <select
               value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="input"
+              onChange={(e) => {
+                setStatusFilter(e.target.value)
+                setFiltersApplied(false) // Reset applied status when filter changes
+              }}
+              className={`input ${statusFilter !== 'all' ? 'border-green-500 bg-green-50' : ''}`}
             >
               <option value="all">All Status</option>
               <option value="Active">Active</option>
@@ -130,11 +197,14 @@ const Ships = () => {
           </div>
 
           <div className="flex items-center space-x-2">
-            <Filter className="h-5 w-5 text-gray-400" />
+            <Filter className={`h-5 w-5 ${typeFilter !== 'all' ? 'text-purple-600' : 'text-gray-400'}`} />
             <select
               value={typeFilter}
-              onChange={(e) => setTypeFilter(e.target.value)}
-              className="input"
+              onChange={(e) => {
+                setTypeFilter(e.target.value)
+                setFiltersApplied(false) // Reset applied status when filter changes
+              }}
+              className={`input ${typeFilter !== 'all' ? 'border-purple-500 bg-purple-50' : ''}`}
             >
               <option value="all">All Types</option>
               <option value="Container Ship">Container Ship</option>
@@ -145,43 +215,115 @@ const Ships = () => {
               <option value="Other">Other</option>
             </select>
           </div>
-        </div>
 
-        {/* Sorting */}
-        <div className="mt-4 flex items-center space-x-4">
-          <div className="flex items-center space-x-2">
-            <span className="text-sm text-gray-600">Sort by:</span>
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-              className="input text-sm"
-            >
-              <option value="name">Name</option>
-              <option value="type">Type</option>
-              <option value="status">Status</option>
-              <option value="efficiency">Efficiency</option>
-              <option value="createdAt">Date Added</option>
-            </select>
+          <div className="flex items-center">
             <button
-              onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-              className="p-1 hover:bg-gray-100 rounded"
+              onClick={handleApplyFilters}
+              className={`w-full py-2 px-4 flex items-center justify-center space-x-2 ${
+                filtersApplied 
+                  ? 'btn-outline text-green-600 border-green-300' 
+                  : 'btn-primary'
+              }`}
             >
-              {sortOrder === 'asc' ? '↑' : '↓'}
+              <Filter className="h-4 w-4" />
+              <span>{filtersApplied ? 'Filters Applied' : 'Apply Filters'}</span>
             </button>
           </div>
+        </div>
 
-          <div className="flex items-center space-x-2">
-            <span className="text-sm text-gray-600">Show:</span>
-            <select
-              value={itemsPerPage}
-              onChange={(e) => setItemsPerPage(Number(e.target.value))}
-              className="input text-sm"
-            >
-              <option value={6}>6</option>
-              <option value={9}>9</option>
-              <option value={12}>12</option>
-            </select>
-            <span className="text-sm text-gray-600">per page</span>
+        {/* Filter Status Display */}
+        {(searchTerm || statusFilter !== 'all' || typeFilter !== 'all') && (
+          <div className={`mt-4 p-3 rounded-lg ${
+            filtersApplied 
+              ? 'bg-green-50 border border-green-200' 
+              : 'bg-yellow-50 border border-yellow-200'
+          }`}>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2 text-sm">
+                <span className={`font-medium ${
+                  filtersApplied ? 'text-green-800' : 'text-yellow-800'
+                }`}>
+                  {filtersApplied ? '✅ Filters Applied:' : '⚠️ Filters Pending:'}
+                </span>
+                {searchTerm && (
+                  <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full">
+                    Search: "{searchTerm}"
+                  </span>
+                )}
+                {statusFilter !== 'all' && (
+                  <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full">
+                    Status: {statusFilter}
+                  </span>
+                )}
+                {typeFilter !== 'all' && (
+                  <span className="px-2 py-1 bg-purple-100 text-purple-800 rounded-full">
+                    Type: {typeFilter}
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={() => {
+                    setSearchTerm('')
+                    setStatusFilter('all')
+                    setTypeFilter('all')
+                    setCurrentPage(1)
+                    setFiltersApplied(false)
+                  }}
+                  className="text-sm text-red-600 hover:text-red-800 font-medium"
+                >
+                  Reset Filters
+                </button>
+                                 {!filtersApplied && (
+                   <button
+                     onClick={handleApplyFilters}
+                     className="btn-primary text-sm py-1 px-3"
+                   >
+                     Apply Now
+                   </button>
+                 )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Sorting and Pagination Controls */}
+        <div className="mt-4 flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2">
+              <span className="text-sm text-gray-600">Sort by:</span>
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="input text-sm"
+              >
+                <option value="name">Name</option>
+                <option value="type">Type</option>
+                <option value="status">Status</option>
+                <option value="efficiency">Efficiency</option>
+                <option value="createdAt">Date Added</option>
+              </select>
+              <button
+                onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+                className="p-1 hover:bg-gray-100 rounded"
+              >
+                {sortOrder === 'asc' ? '↑' : '↓'}
+              </button>
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <span className="text-sm text-gray-600">Show:</span>
+              <select
+                value={itemsPerPage}
+                onChange={(e) => setItemsPerPage(Number(e.target.value))}
+                className="input text-sm"
+              >
+                <option value={6}>6</option>
+                <option value={9}>9</option>
+                <option value={12}>12</option>
+              </select>
+              <span className="text-sm text-gray-600">per page</span>
+            </div>
           </div>
         </div>
       </div>
