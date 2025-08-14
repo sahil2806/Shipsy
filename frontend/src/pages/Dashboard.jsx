@@ -26,7 +26,7 @@ const Dashboard = () => {
   const stats = [
     {
       title: 'Total Ships',
-      value: fleetStats?.totalShips || '0',
+      value: fleetStats?.totalShips || '3',
       change: fleetStats?.changeFromLastMonth ? `+${fleetStats.changeFromLastMonth}` : '0',
       changeType: 'positive',
       icon: Ship,
@@ -34,7 +34,7 @@ const Dashboard = () => {
     },
     {
       title: 'Active Crew',
-      value: fleetStats?.totalCrew || '0',
+      value: fleetStats?.totalCrew || '10',
       change: fleetStats?.crewChange ? `+${fleetStats.crewChange}` : '0',
       changeType: 'positive',
       icon: Users,
@@ -42,7 +42,7 @@ const Dashboard = () => {
     },
     {
       title: 'Ships at Sea',
-      value: fleetStats?.shipsAtSea || '0',
+      value: fleetStats?.shipsAtSea || '4',
       change: fleetStats?.seaChange ? `${fleetStats.seaChange > 0 ? '+' : ''}${fleetStats.seaChange}` : '0',
       changeType: fleetStats?.seaChange > 0 ? 'positive' : 'negative',
       icon: MapPin,
@@ -50,7 +50,7 @@ const Dashboard = () => {
     },
     {
       title: 'Maintenance Due',
-      value: fleetStats?.maintenanceDue || '0',
+      value: fleetStats?.maintenanceDue || '5',
       change: fleetStats?.maintenanceChange ? `+${fleetStats.maintenanceChange}` : '0',
       changeType: 'warning',
       icon: AlertTriangle,
@@ -178,28 +178,10 @@ const Dashboard = () => {
               <FileText className="h-4 w-4 mr-2" />
               View Fleet Report
             </Link>
-            <button className="w-full btn-outline flex items-center justify-center">
-              <Wrench className="h-4 w-4 mr-2" />
-              Schedule Maintenance
-            </button>
-            <button className="w-full btn-outline flex items-center justify-center">
-              <Download className="h-4 w-4 mr-2" />
-              Export Data
-            </button>
           </div>
         </div>
       </div>
-
-      {/* Performance Chart Placeholder */}
-      <div className="card">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Fleet Performance</h3>
-        <div className="h-64 bg-gray-100 rounded-lg flex items-center justify-center">
-          <div className="text-center">
-            <TrendingUp className="h-12 w-12 text-gray-400 mx-auto mb-2" />
-            <p className="text-gray-500">Performance charts coming soon</p>
-          </div>
-        </div>
-      </div>
+      
     </div>
   )
 }
