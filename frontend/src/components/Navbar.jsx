@@ -53,10 +53,13 @@ const Navbar = () => {
           <div className="hidden md:flex items-center space-x-4">
             {isAuthenticated ? (
               <div className="flex items-center space-x-4">
-                <div className="flex items-center space-x-2 text-gray-700">
+                <Link
+                  to="/profile"
+                  className="flex items-center space-x-2 text-gray-700 hover:text-primary-600 transition-colors duration-200"
+                >
                   <User className="h-5 w-5" />
                   <span>{user?.username}</span>
-                </div>
+                </Link>
                 <button 
                   onClick={handleLogout}
                   className="flex items-center space-x-2 text-gray-700 hover:text-red-600 transition-colors duration-200"
@@ -116,10 +119,14 @@ const Navbar = () => {
             
             {isAuthenticated ? (
               <div className="pt-4 space-y-2 border-t border-gray-200">
-                <div className="flex items-center space-x-2 px-3 py-2 text-gray-700">
+                <Link
+                  to="/profile"
+                  className="flex items-center space-x-2 px-3 py-2 text-gray-700 hover:text-primary-600 transition-colors duration-200"
+                  onClick={() => setIsOpen(false)}
+                >
                   <User className="h-5 w-5" />
                   <span>{user?.username}</span>
-                </div>
+                </Link>
                 <button 
                   onClick={handleLogout}
                   className="flex items-center space-x-2 w-full px-3 py-2 text-left text-gray-700 hover:text-red-600 transition-colors duration-200"

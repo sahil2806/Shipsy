@@ -40,9 +40,18 @@ api.interceptors.response.use(
 
 // Auth API
 export const authAPI = {
-  login: (credentials) => api.post('/auth/login', credentials),
-  register: (userData) => api.post('/auth/register', userData),
-  getMe: () => api.get('/auth/me'),
+  login: (credentials) => {
+    console.log('🌐 API: Login request with:', credentials);
+    return api.post('/auth/login', credentials);
+  },
+  register: (userData) => {
+    console.log('🌐 API: Register request with:', userData);
+    return api.post('/auth/register', userData);
+  },
+  getMe: () => {
+    console.log('🌐 API: GetMe request');
+    return api.get('/auth/me');
+  },
 };
 
 // Users API

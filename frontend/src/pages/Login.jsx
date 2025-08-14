@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { Eye, EyeOff, Ship } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import toast from 'react-hot-toast'
@@ -14,6 +14,7 @@ const Login = () => {
   
   const { login } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
 
   const handleChange = (e) => {
     setFormData({
@@ -31,7 +32,9 @@ const Login = () => {
       
       if (result.success) {
         toast.success('Login successful!')
-        navigate('/dashboard')
+        // Redirect to intended page or dashboard
+        const from = location.state?.from?.pathname || '/dashboard'
+        navigate(from, { replace: true })
       } else {
         toast.error(result.error || 'Login failed')
       }

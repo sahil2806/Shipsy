@@ -1,6 +1,8 @@
 import React, { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { Eye, EyeOff, Ship } from 'lucide-react'
+import { useAuth } from '../contexts/AuthContext'
+import toast from 'react-hot-toast'
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -11,6 +13,10 @@ const Register = () => {
   })
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [loading, setLoading] = useState(false)
+  
+  const { register } = useAuth()
+  const navigate = useNavigate()
 
   const handleChange = (e) => {
     setFormData({
@@ -19,10 +25,58 @@ const Register = () => {
     })
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    // TODO: Implement registration logic
-    console.log('Registration attempt:', formData)
+    
+    // Validate passwords match
+    if (formData.password !== formData.confirmPassword) {
+      toast.error('Passwords do not match')
+      return
+    }
+    
+    // Validate password length
+    if (formData.password.length < 6) {
+      toast.error('Password must be at least 6 characters long')
+      return
+    }
+    
+    setLoading(true)
+    
+    try {
+      console.log('🚀 Attempting registration with data:', {
+        username: formData.username,
+        email: formData.email,
+        password: formData.password,
+        profile: {
+          firstName: formData.username.split(' ')[0] || formData.username,
+          lastName: formData.username.split(' ').slice(1).join(' ') || ''
+        }
+      })
+      
+      const result = await register({
+        username: formData.username,
+        email: formData.email,
+        password: formData.password,
+        profile: {
+          firstName: formData.username.split(' ')[0] || formData.username,
+          lastName: formData.username.split(' ').slice(1).join(' ') || ''
+        }
+      })
+      
+      console.log('📝 Registration result:', result)
+      
+      if (result.success) {
+        toast.success('Registration successful!')
+        navigate('/dashboard', { replace: true })
+      } else {
+        toast.error(result.error || 'Registration failed')
+      }
+    } catch (error) {
+      console.error('❌ Registration error:', error)
+      toast.error('An unexpected error occurred')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -62,6 +116,7 @@ const Register = () => {
                 onChange={handleChange}
                 className="input mt-1"
                 placeholder="Enter your username"
+                disabled={loading}
               />
             </div>
 
@@ -79,6 +134,7 @@ const Register = () => {
                 onChange={handleChange}
                 className="input mt-1"
                 placeholder="Enter your email"
+                disabled={loading}
               />
             </div>
 
@@ -97,6 +153,7 @@ const Register = () => {
                   onChange={handleChange}
                   className="input pr-10"
                   placeholder="Enter your password"
+                  disabled={loading}
                 />
                 <button
                   type="button"
@@ -127,6 +184,7 @@ const Register = () => {
                   onChange={handleChange}
                   className="input pr-10"
                   placeholder="Confirm your password"
+                  disabled={loading}
                 />
                 <button
                   type="button"
@@ -146,9 +204,10 @@ const Register = () => {
           <div>
             <button
               type="submit"
-              className="btn-primary w-full py-3 text-base"
+              disabled={loading}
+              className="btn-primary w-full py-3 text-base disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Create Account
+              {loading ? 'Creating Account...' : 'Create Account'}
             </button>
           </div>
         </form>
