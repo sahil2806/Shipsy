@@ -1,6 +1,9 @@
 import axios from 'axios';
 
-const API_BASE_URL = '/api';
+// Determine API base URL based on environment
+const API_BASE_URL = import.meta.env.PROD 
+  ? import.meta.env.VITE_BACKEND_URL + '/api'  // Production: use full backend URL
+  : '/api';  // Development: use proxy
 
 // Create axios instance
 const api = axios.create({
